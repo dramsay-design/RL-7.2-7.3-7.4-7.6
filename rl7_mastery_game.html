@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RL.7 Mastery Game</title>
+  <style>
+    :root{
+      --deep-gold:#b8860b;
+      --mid-gold:#d4af37;
+      --soft-gold:#f8e7a9;
+      --deep-pink:#a83b67;
+      --mid-pink:#d96d98;
+      --soft-pink:#fde6ef;
+      --scarlet:#b22222;
+      --soft-scarlet:#ffd7d7;
+      --ink:#2f1d1d;
+      --paper:#fffdfa;
+      --shadow:0 12px 30px rgba(0,0,0,.18);
+      --good:#2e7d32;
+      --bad:#b71c1c;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Georgia, "Times New Roman", serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(248,231,169,.30), transparent 24%),
+        radial-gradient(circle at 85% 25%, rgba(217,109,152,.28), transparent 24%),
+        radial-gradient(circle at 28% 80%, rgba(178,34,34,.18), transparent 20%),
+        radial-gradient(circle at 75% 75%, rgba(212,175,55,.18), transparent 20%),
+        linear-gradient(135deg, #8d2348 0%, #c58f2e 45%, #b22222 100%);
+      min-height:100vh;
+    }
+
+    .swirl-overlay{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 10% 10%, transparent 0 12%, rgba(255,255,255,.05) 12.5% 13%, transparent 13.5%),
+        radial-gradient(circle at 80% 30%, transparent 0 10%, rgba(255,255,255,.04) 10.5% 11%, transparent 11.5%),
+        radial-gradient(circle at 30% 85%, transparent 0 14%, rgba(255,255,255,.04) 14.5% 15%, transparent 15.5%);
+    }
+
+    .container{
+      max-width:1160px;
+      margin:0 auto;
+      padding:24px 18px 48px;
+      position:relative;
+      z-index:1;
+    }
+
+    .progress-shell{
+      background:rgba(255,255,255,.88);
+      border-radius:999px;
+      padding:7px;
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+      position:sticky;
+      top:10px;
+      z-index:20;
+    }
+
+    .progress-track{
+      background:#ead7d7;
+      border-radius:999px;
+      overflow:hidden;
+      height:22px;
+      position:relative;
+    }
+
+    .progress-bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(135deg, var(--mid-gold), var(--mid-pink), var(--scarlet));
+      transition:width .35s ease;
+    }
+
+    .progress-label{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:.95rem;
+      font-weight:bold;
+      color:#2b1b1b;
+    }
+
+    .card{
+      background:rgba(255,255,255,.97);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      margin:18px 0;
+      border:1px solid rgba(168,59,103,.16);
+    }
+
+    h1,h2,h3,h4{margin-top:0}
+    h1{font-size:2rem;text-align:center;color:#8d2348}
+    h2{
+      color:#8d2348;
+      border-bottom:4px solid var(--mid-gold);
+      padding-bottom:8px;
+      margin-bottom:18px;
+    }
+    h3{color:#9c6a0c;margin-top:22px}
+    h4{color:#8d2348;margin:12px 0 8px}
+
+    p, li{
+      font-size:1.05rem;
+      line-height:1.7;
+    }
+
+    .intro{text-align:center}
+
+    .name-wrap{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:20px;
+    }
+
+    input[type="text"]{
+      padding:14px 16px;
+      width:320px;
+      border:2px solid var(--mid-pink);
+      border-radius:12px;
+      font-size:1rem;
+      font-family:Georgia, "Times New Roman", serif;
+      outline:none;
+    }
+
+    button{
+      background:linear-gradient(135deg, var(--mid-gold), var(--mid-pink), var(--scarlet));
+      color:white;
+      border:none;
+      border-radius:12px;
+      padding:12px 20px;
+      font-size:1rem;
+      font-family:Georgia, "Times New Roman", serif;
+      cursor:pointer;
+      box-shadow:0 8px 18px rgba(141,35,72,.22);
+    }
+
+    button:hover{
+      opacity:.96;
+      transform:translateY(-1px);
+    }
+
+    button.secondary{
+      background:#fff;
+      color:#8d2348;
+      border:1px solid #d9a1aa;
+      box-shadow:none;
+    }
+
+    .nav{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:24px;
+    }
+
+    .hidden{display:none}
+
+    .standard-box{
+      background:linear-gradient(180deg, #fff8ed, #fff1f7);
+      border-left:6px solid var(--scarlet);
+      padding:16px;
+      border-radius:14px;
+      margin:14px 0 18px;
+    }
+
+    .text-box{
+      background:var(--paper);
+      border:1px solid #ead7d7;
+      border-radius:14px;
+      padding:18px;
+      margin:16px 0;
+    }
+
+    .poem-box{
+      white-space:pre-line;
+      font-size:1.08rem;
+      line-height:1.9;
+    }
+
+    .question-block{
+      background:#fff9fc;
+      border:1px solid #efd5df;
+      border-radius:16px;
+      padding:18px;
+      margin:18px 0;
+    }
+
+    .model-box{
+      background:#fffaf0;
+      border-left:6px solid var(--mid-gold);
+      border-radius:14px;
+      padding:16px;
+      margin:14px 0;
+    }
+
+    .analysis-box{
+      background:#fff8fb;
+      border-left:6px solid var(--deep-pink);
+      border-radius:14px;
+      padding:16px;
+      margin:14px 0;
+    }
+
+    .answer-demo{
+      background:#fffdf7;
+      border:1px solid #ecdca3;
+      border-radius:14px;
+      padding:14px;
+      margin-top:10px;
+    }
+
+    .option{
+      border:1px solid #dfc7d2;
+      border-radius:12px;
+      padding:12px 14px;
+      margin:10px 0;
+      background:white;
+      cursor:pointer;
+    }
+
+    .option:hover{background:#fff3f8}
+    .option.correct{background:#fff6d9;border:2px solid var(--deep-gold)}
+    .option.incorrect{background:#fdecef;border:2px solid var(--scarlet)}
+    .option.selected{border:2px solid var(--mid-pink);background:#fdeef4}
+
+    .small-note{
+      font-size:.96rem;
+      color:#444;
+      font-style:italic;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:999px;
+      background:#fff0f5;
+      color:#8d2348;
+      font-size:.95rem;
+      margin:4px 6px 4px 0;
+      border:1px solid #efc9d7;
+    }
+
+    .hint-box{
+      margin-top:14px;
+      border-radius:14px;
+      background:linear-gradient(135deg,#fff8eb,#fff0f7);
+      border:1px solid #eed2dc;
+      padding:12px 14px;
+    }
+
+    .hint-title{
+      font-weight:bold;
+      color:#8d2348;
+      margin-bottom:6px;
+    }
+
+    .thinking{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-style:italic;
+      color:#4a3838;
+      flex-wrap:wrap;
+    }
+
+    .dots{display:inline-flex;gap:4px}
+    .dots span{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--mid-pink);
+      animation:bounce 1.2s infinite ease-in-out;
+      display:inline-block;
+    }
+    .dots span:nth-child(2){animation-delay:.15s}
+    .dots span:nth-child(3){animation-delay:.3s}
+
+    @keyframes bounce{
+      0%,80%,100% {transform:translateY(0); opacity:.4;}
+      40% {transform:translateY(-6px); opacity:1;}
+    }
+
+    .hint-content{margin-top:10px;display:none}
+    .hint-content.show{display:block}
+
+    .feedback-box{
+      margin-top:14px;
+      border-radius:14px;
+      padding:14px;
+      display:none;
+    }
+    .feedback-box.show{display:block}
+    .feedback-correct{
+      background:#fff8dc;
+      border:1px solid #d8bc63;
+      color:#6c5200;
+    }
+    .feedback-wrong{
+      background:#fff4f5;
+      border:1px solid #d9a1aa;
+      color:#6d2432;
+    }
+
+    .annotation-tools{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:10px 0 16px;
+    }
+
+    .tool-btn{
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid #d9a1aa;
+      background:white;
+      color:#8d2348;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .tool-btn.active{
+      outline:3px solid rgba(212,175,55,.35);
+    }
+
+    .legend{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      font-size:.95rem;
+    }
+
+    .legend-item{
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .chip{
+      width:16px;
+      height:16px;
+      border-radius:4px;
+      border:1px solid #b9b9b9;
+      display:inline-block;
+    }
+
+    .chip-theme{background:#fff2a8}
+    .chip-figurative{background:#ffd2e4}
+    .chip-tone{background:#ffd8c2}
+
+    .annotated-poem{
+      white-space:pre-line;
+      line-height:2.1;
+      font-size:1.08rem;
+    }
+
+    .poem-line{
+      padding:5px 8px;
+      border-radius:8px;
+      cursor:pointer;
+      transition:background .2s ease, outline .2s ease;
+      display:block;
+    }
+
+    .poem-line:hover{
+      background:#fff7fb;
+    }
+
+    .hl-theme{background:#fff2a8}
+    .hl-figurative{background:#ffd2e4}
+    .hl-tone{background:#ffd8c2}
+
+    .annotation-notes{
+      margin-top:14px;
+      background:#fffdf7;
+      border:1px solid #ecdca3;
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .drag-shell{
+      background:#fffdfa;
+      border:1px solid #ead7d7;
+      border-radius:18px;
+      padding:18px;
+      margin-top:12px;
+    }
+
+    .drag-bank{
+      display:grid;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .drag-item{
+      padding:12px;
+      background:linear-gradient(135deg,#fff5dc,#ffeaf2);
+      border:2px solid #efcc8c;
+      border-radius:12px;
+      cursor:grab;
+    }
+
+    .drop-zone{
+      min-height:80px;
+      border:3px dashed var(--scarlet);
+      border-radius:14px;
+      background:#fff4f6;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-weight:bold;
+      color:#8d2348;
+    }
+
+    .drop-zone.filled{
+      background:#fff7df;
+      border-style:solid;
+    }
+
+    .certificate{
+      border:10px double #8d2348;
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,248,235,.98));
+      padding:36px;
+      border-radius:18px;
+      text-align:center;
+      position:relative;
+    }
+
+    .seal{
+      width:120px;
+      height:120px;
+      margin:18px auto;
+      border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #fff9c7, #e2bb43 70%);
+      border:6px solid #9c7408;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:2.5rem;
+      font-weight:bold;
+      color:#6f5200;
+      box-shadow:0 8px 20px rgba(0,0,0,.15);
+      position:relative;
+    }
+
+    .seal::before,
+    .seal::after{
+      content:"";
+      position:absolute;
+      bottom:-26px;
+      width:24px;
+      height:38px;
+      background:linear-gradient(180deg,#c43c63,#8d2348);
+      clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%);
+    }
+    .seal::before{left:28px}
+    .seal::after{right:28px}
+
+    .score-box{
+      font-size:1.2rem;
+      font-weight:bold;
+      color:#8c6610;
+      margin-top:12px;
+    }
+
+    .warning{
+      background:#fff1f2;
+      border-left:6px solid var(--scarlet);
+      padding:14px;
+      border-radius:12px;
+      margin-top:16px;
+    }
+
+    .footer-note{
+      text-align:center;
+      color:#fff3f5;
+      font-size:.95rem;
+      margin-top:16px;
+      font-weight:600;
+      letter-spacing:.5px;
+    }
+
+    @media print{
+      body{background:white !important;}
+      .swirl-overlay,.progress-shell,.nav,.footer-note,button,.annotation-tools,.legend,.hint-box{display:none !important;}
+      .container{max-width:100%;padding:0;}
+      .card{box-shadow:none;border:none;margin:0;padding:0;}
+      #screen-certificate{display:block !important;}
+      .certificate{margin-top:30px;page-break-inside:avoid;}
+    }
+  </style>
+</head>
+<body>
+<div class="swirl-overlay"></div>
+
+<div class="container">
+  <div class="progress-shell">
+    <div class="progress-track">
+      <div id="progressBar" class="progress-bar"></div>
+      <div id="progressLabel" class="progress-label">Progress: 0%</div>
+    </div>
+  </div>
+
+  <section id="screen-home" class="card">
+    <h1>RL.7 Mastery Game</h1>
+    <div class="intro">
+      <p>Welcome. This review game teaches <strong>RL.7.1, RL.7.2, RL.7.4, and RL.7.6</strong> with a reteach poem and story, then checks mastery with a brand-new poem and a brand-new short story.</p>
+      <p>You will get animated thinking hints, interactive annotation of poem lines, drag-and-drop evidence questions, and a printable gold certificate for <strong>80% or higher</strong>.</p>
+      <div>
+        <span class="pill">Theme</span>
+        <span class="pill">Character Development</span>
+        <span class="pill">Figurative Language</span>
+        <span class="pill">Point of View</span>
+      </div>
+      <div class="name-wrap">
+        <input id="studentName" type="text" placeholder="Enter your full name" maxlength="40" />
+        <button id="startBtn">Begin</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-overview" class="card hidden">
+    <h2>Recap and Study Guide</h2>
+    <p>You will first study the reteach poem for <strong>RL.8.2</strong> and <strong>RL.8.4</strong>. Then you will study the reteach story for <strong>RL.8.3</strong> and <strong>RL.8.6</strong>. At the end, you will complete a wrap-up practice with a new poem and a new short story.</p>
+    <div class="standard-box">
+      <p><strong>RL.7.1:</strong> Cite several pieces of textual evidence to support what the text says directly and what you can infer.</p>
+      <p><strong>RL.7.2:</strong> Determine a theme or central idea of a text and explain how it develops over the course of the text.</p>
+      <p><strong>RL.7.4:</strong> Determine the meaning of words and phrases as they are used in a text, including figurative and connotative meanings, and explain how word choice shapes tone.</p>
+      <p><strong>RL.7.6:</strong> Analyze how an author develops and contrasts the points of view of different characters or narrators.</p>
+    </div>
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-poemstudy" class="card hidden">
+    <h2>Poem Study</h2>
+
+    <div class="text-box poem-box">The meadow wakes in threads of gold where quiet rivers run,
+Soft wind combs through the emerald grass beneath the rising sun.
+But towers hum with silver screens that glow through misty air,
+A silent fog of signals spreads where swallows used to share.
+
+The mountains breathe in ancient calm, their shadows deep and wide,
+Yet wires creep like metal vines along the forest side.
+Bright screens replace the firefly glow that danced through summer night,
+A smog of endless buzzing lights that dims the stars from sight.</div>
+
+    <h3>Interactive Annotation</h3>
+    <p>Click a tool, then click poem lines to mark them. This helps you notice theme clues, figurative language, and tone/word choice.</p>
+
+    <div class="annotation-tools">
+      <button class="tool-btn active" data-tool="theme">Theme Clue</button>
+      <button class="tool-btn" data-tool="figurative">Figurative Language</button>
+      <button class="tool-btn" data-tool="tone">Tone / Word Choice</button>
+      <button class="tool-btn secondary" id="clearAnnotationsBtn">Clear Annotations</button>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="chip chip-theme"></span> Theme Clue</div>
+      <div class="legend-item"><span class="chip chip-figurative"></span> Figurative Language</div>
+      <div class="legend-item"><span class="chip chip-tone"></span> Tone / Word Choice</div>
+    </div>
+
+    <div class="text-box annotated-poem" id="annotatedPoem">
+      <span class="poem-line" data-line="1">The meadow wakes in threads of gold where quiet rivers run,</span>
+      <span class="poem-line" data-line="2">Soft wind combs through the emerald grass beneath the rising sun.</span>
+      <span class="poem-line" data-line="3">But towers hum with silver screens that glow through misty air,</span>
+      <span class="poem-line" data-line="4">A silent fog of signals spreads where swallows used to share.</span>
+      <span class="poem-line" data-line="5">The mountains breathe in ancient calm, their shadows deep and wide,</span>
+      <span class="poem-line" data-line="6">Yet wires creep like metal vines along the forest side.</span>
+      <span class="poem-line" data-line="7">Bright screens replace the firefly glow that danced through summer night,</span>
+      <span class="poem-line" data-line="8">A smog of endless buzzing lights that dims the stars from sight.</span>
+    </div>
+
+    <div class="annotation-notes" id="annotationNotes">
+      <strong>Annotation Notes:</strong>
+      <p>Select a line to see a teaching note here.</p>
+    </div>
+
+    <h3>Line-by-Line Analysis</h3>
+
+    <div class="analysis-box">
+      <p><strong>“The meadow wakes in threads of gold where quiet rivers run,”</strong></p>
+      <p><strong>Device/Technique:</strong> personification, imagery, metaphor</p>
+      <p><strong>How it is used:</strong> The meadow is personified as “waking,” which makes nature feel alive and gentle. “Threads of gold” is a metaphor for sunlight stretching across the land.</p>
+      <p><strong>Word choice:</strong> Words like <em>meadow</em>, <em>gold</em>, and <em>quiet</em> establish a peaceful, natural beginning and create a calm, beautiful tone.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“Soft wind combs through the emerald grass beneath the rising sun.”</strong></p>
+      <p><strong>Device/Technique:</strong> personification, sensory imagery</p>
+      <p><strong>How it is used:</strong> The wind “combs” through the grass, giving the wind a human action and making the movement seem smooth and tender.</p>
+      <p><strong>Word choice:</strong> <em>Soft</em>, <em>emerald</em>, and <em>rising sun</em> deepen the visual beauty of the setting. The diction keeps the tone gentle and harmonious.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“But towers hum with silver screens that glow through misty air,”</strong></p>
+      <p><strong>Device/Technique:</strong> contrast, symbolism, auditory imagery</p>
+      <p><strong>How it is used:</strong> The word <em>But</em> introduces a shift. The poem moves from natural beauty to human technology. “Silver screens” symbolize devices and modern digital life.</p>
+      <p><strong>Word choice:</strong> <em>Hum</em> creates a mechanical sound that contrasts with the natural quiet of the first two lines. The tone begins to change from peaceful to uneasy.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“A silent fog of signals spreads where swallows used to share.”</strong></p>
+      <p><strong>Device/Technique:</strong> metaphor, symbolism, contrast</p>
+      <p><strong>How it is used:</strong> The “fog of signals” metaphorically represents invisible technological networks. The line contrasts wireless signals with birds once sharing the sky.</p>
+      <p><strong>Word choice:</strong> <em>Silent fog</em> suggests quiet invasion. The phrase feels unsettling because something invisible is replacing natural life.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“The mountains breathe in ancient calm, their shadows deep and wide,”</strong></p>
+      <p><strong>Device/Technique:</strong> personification, imagery</p>
+      <p><strong>How it is used:</strong> The mountains “breathe,” which gives them life and power. Nature again appears steady, timeless, and majestic.</p>
+      <p><strong>Word choice:</strong> <em>Ancient calm</em> suggests permanence and wisdom. The diction presents nature as older and more enduring than human invention.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“Yet wires creep like metal vines along the forest side.”</strong></p>
+      <p><strong>Device/Technique:</strong> simile, imagery</p>
+      <p><strong>How it is used:</strong> The wires are compared to vines using <em>like</em>. This simile shows technology spreading through nature in a way that imitates natural growth but feels unnatural.</p>
+      <p><strong>Word choice:</strong> <em>Creep</em> has a negative connotation. It suggests quiet invasion or unwelcome movement rather than progress.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“Bright screens replace the firefly glow that danced through summer night,”</strong></p>
+      <p><strong>Device/Technique:</strong> symbolism, imagery, contrast</p>
+      <p><strong>How it is used:</strong> Fireflies symbolize natural wonder and beauty. Screens symbolize human technology. The line shows direct replacement of nature by devices.</p>
+      <p><strong>Word choice:</strong> <em>Danced</em> gives the fireflies a lively, magical quality. That makes the replacement feel like a loss rather than improvement.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>“A smog of endless buzzing lights that dims the stars from sight.”</strong></p>
+      <p><strong>Device/Technique:</strong> metaphor, sound imagery, tone</p>
+      <p><strong>How it is used:</strong> “Smog” is a metaphor for overwhelming artificial light. The line suggests that technology has become so constant that it blocks the natural world.</p>
+      <p><strong>Word choice:</strong> <em>Endless</em>, <em>buzzing</em>, and <em>dims</em> create a negative tone. The stars, usually symbols of wonder, are literally and symbolically being hidden.</p>
+    </div>
+
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-rl82" class="card hidden">
+    <h2>RL.7.2 with the Poem</h2>
+    <div class="standard-box">
+      <p><strong>What the standard says:</strong> Determine the theme or message of a text and explain how the author develops it from beginning to end.</p>
+    </div>
+
+    <div class="hint-box">
+      <div class="hint-title">Animated Thinking Hint</div>
+      <div class="thinking">
+        <span>Ask: What message does the poem send about what technology is doing to the natural world?</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </div>
+      <button class="hint-toggle" data-target="hint82">Show Hint</button>
+      <div id="hint82" class="hint-content">Look at how the poem starts with peaceful nature, then shifts to screens, signals, wires, and buzzing lights. That shift helps reveal the theme.</div>
+    </div>
+
+    <h3>Modeled Example 1: Theme</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> Which statement best expresses a theme of the poem?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. Technology can gradually overshadow the beauty of the natural world.<br>
+      B. Mountains are stronger than cities.<br>
+      C. Nature and technology always exist in perfect harmony.<br>
+      D. Birds disappear mainly because of weather.</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> The poem begins with peaceful nature and then shifts to towers, signals, wires, and buzzing lights. By the final line, artificial light dims the stars. That development supports the message that technology can overshadow nature.</p>
+        <p><strong>Correct Answer:</strong> A. Technology can gradually overshadow the beauty of the natural world.</p>
+      </div>
+    </div>
+
+    <h3>Modeled Example 2: Development of Theme</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> How does the poet develop the central idea over the course of the poem?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. By moving from peaceful natural imagery to increasingly intrusive images of technology<br>
+      B. By describing how people repair environmental damage with screens<br>
+      C. By proving that mountains are unaffected by modern life<br>
+      D. By comparing one city to another city</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> The first half emphasizes meadows, wind, rivers, and mountains. Then the poem shifts to towers, signals, wires, screens, and buzzing lights. This contrast helps build the central idea.</p>
+        <p><strong>Correct Answer:</strong> A. By moving from peaceful natural imagery to increasingly intrusive images of technology</p>
+      </div>
+    </div>
+
+    <div class="question-block" id="rl82q1"></div>
+
+    <div class="drag-shell">
+      <h3>Drag-and-Drop Evidence</h3>
+      <p><strong>Directions:</strong> Drag the strongest evidence into the drop zone to support the claim: <em>The poem suggests that technology is replacing natural beauty.</em></p>
+      <div id="dragBankPoem" class="drag-bank">
+        <div class="drag-item" draggable="true" data-correct="false" data-group="poemdrag">The mountains breathe in ancient calm, their shadows deep and wide,</div>
+        <div class="drag-item" draggable="true" data-correct="true" data-group="poemdrag">Bright screens replace the firefly glow that danced through summer night,</div>
+        <div class="drag-item" draggable="true" data-correct="false" data-group="poemdrag">Soft wind combs through the emerald grass beneath the rising sun.</div>
+        <div class="drag-item" draggable="true" data-correct="false" data-group="poemdrag">Quiet rivers run where golden threads of sunlight fall.</div>
+      </div>
+      <div id="dropZonePoem" class="drop-zone">Drop the strongest evidence here</div>
+      <p id="dragResultPoem" class="small-note"></p>
+    </div>
+
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-rl84" class="card hidden">
+    <h2>RL.7.4 with the Poem</h2>
+    <div class="standard-box">
+      <p><strong>What the standard says:</strong> Determine the meaning of words and phrases as they are used in a text, including figurative language and connotations, and explain how those choices affect tone.</p>
+    </div>
+
+    <div class="hint-box">
+      <div class="hint-title">Animated Thinking Hint</div>
+      <div class="thinking">
+        <span>Ask: Why did the poet choose words like “creep,” “smog,” and “buzzing” instead of neutral words?</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </div>
+      <button class="hint-toggle" data-target="hint84">Show Hint</button>
+      <div id="hint84" class="hint-content">Strong diction changes tone. Negative words can make a poem sound uneasy, critical, or tense.</div>
+    </div>
+
+    <h3>Modeled Example 1: Figurative Language</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> What does the phrase “a silent fog of signals” most likely suggest?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. Invisible technology spreading through natural space<br>
+      B. A storm moving across the valley<br>
+      C. Birds gathering over a river<br>
+      D. Morning mist rising from the ground</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> The phrase is metaphorical, not literal. “Signals” points to technology, and “fog” suggests something spreading and covering an area. The poet uses it to show technology taking over space once occupied by nature.</p>
+        <p><strong>Correct Answer:</strong> A. Invisible technology spreading through natural space</p>
+      </div>
+    </div>
+
+    <h3>Modeled Example 2: Word Choice and Tone</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> How does the word “creep” affect the meaning and tone of the line “Yet wires creep like metal vines along the forest side”?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. It gives the spread of wires a stealthy, unwelcome feeling.<br>
+      B. It makes the wires seem cheerful and harmless.<br>
+      C. It shows that the wires are fragile and weak.<br>
+      D. It suggests the wires move quickly and violently.</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> The word “creep” carries a negative connotation. It suggests something slowly advancing in a secretive or unwelcome way. That diction helps the poem sound uneasy and critical.</p>
+        <p><strong>Correct Answer:</strong> A. It gives the spread of wires a stealthy, unwelcome feeling.</p>
+      </div>
+    </div>
+
+    <div class="question-block" id="rl84q1"></div>
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-storystudy" class="card hidden">
+    <h2>Story Study</h2>
+
+    <div class="text-box">
+      <p>In the small village of Red Hollow lived a boy named Caleb who loved playing tricks on everyone he met.</p>
+      <p>He believed the world was far too serious and that it was his duty to make people laugh.</p>
+      <p>Every morning he woke with a new prank already forming in his mind.</p>
+      <p>Sometimes he tied strings across doorways so hats would fall when people entered.</p>
+      <p>Other days he switched the labels on jars in the village market.</p>
+      <p>The baker once sprinkled salt instead of sugar because of Caleb’s tricks.</p>
+      <p>Though people laughed at first, the jokes slowly grew tiring.</p>
+      <p>Many villagers began to sigh whenever they saw Caleb coming down the road.</p>
+      <p>His closest friend, Jonah, often warned him to stop.</p>
+      <p>Jonah told him that people would stop trusting him if he kept fooling them.</p>
+      <p>Caleb simply laughed and promised that tomorrow’s joke would be even better.</p>
+      <p>One day he ran through the village shouting that a wild goat had escaped from the farm.</p>
+      <p>Everyone rushed outside to see the chaos.</p>
+      <p>But when they arrived, they found Caleb laughing behind a fence.</p>
+      <p>The goat had never escaped at all.</p>
+      <p>After that, the villagers began ignoring most of the things Caleb said.</p>
+      <p>Even when he tried to speak seriously, people assumed it was another prank.</p>
+      <p>Caleb didn’t notice how their patience had slowly worn thin.</p>
+      <p>He was too busy planning his next joke.</p>
+      <p>Late one autumn afternoon, Caleb wandered near the edge of the forest.</p>
+      <p>Dark clouds gathered quietly above the hills.</p>
+      <p>The wind began to rustle through the dry leaves on the ground.</p>
+      <p>As he walked, Caleb stepped onto what looked like solid earth.</p>
+      <p>But the ground suddenly crumbled beneath his feet.</p>
+      <p>With a loud cry he tumbled into a deep hole hidden by loose soil.</p>
+      <p>He landed hard at the bottom, knocking the breath from his lungs.</p>
+      <p>When he finally looked up, the opening above him seemed far away.</p>
+      <p>The walls of the pit were steep and slippery.</p>
+      <p>Caleb tried to climb out but slid back down each time.</p>
+      <p>Panic began to rise in his chest.</p>
+      <p>He shouted as loudly as he could.</p>
+      <p>“Help! Someone help me!” he cried.</p>
+      <p>His voice echoed through the quiet forest.</p>
+      <p>After a while, two farmers walking nearby heard the shouting.</p>
+      <p>They stopped and listened carefully.</p>
+      <p>“That sounds like Caleb again,” one farmer said.</p>
+      <p>“Probably another silly trick,” the other replied.</p>
+      <p>They shook their heads and continued walking.</p>
+      <p>Soon Caleb’s voice grew hoarse from calling for help.</p>
+      <p>The sky above him turned darker as the storm clouds thickened.</p>
+      <p>Thunder rumbled in the distance like a warning drum.</p>
+      <p>Rain began to fall in slow, cold drops.</p>
+      <p>At first it seemed harmless.</p>
+      <p>But the rain quickly grew heavier.</p>
+      <p>Water trickled down the sides of the hole and began collecting at the bottom.</p>
+      <p>Caleb shouted again and again for help.</p>
+      <p>A group of villagers passed along the road nearby.</p>
+      <p>They heard the faint cries but only sighed.</p>
+      <p>“That boy never stops with his tricks,” one woman muttered.</p>
+      <p>None of them came to look.</p>
+      <p>The rain poured harder as night approached.</p>
+      <p>The hole slowly filled with muddy water.</p>
+      <p>Caleb’s cries became weaker and weaker.</p>
+      <p>The storm roared through the forest for hours.</p>
+      <p>By morning the rain had finally stopped.</p>
+      <p>Villagers walked through the village streets talking about the heavy storm.</p>
+      <p>Someone mentioned they had not seen Caleb that day.</p>
+      <p>They searched the village and the nearby woods.</p>
+      <p>Near the edge of the forest they found the collapsed ground where Caleb had fallen.</p>
+      <p>But the hole was filled with rainwater and mud.</p>
+      <p>Caleb was never seen again, and the villagers quietly remembered the lesson that trust once lost is not easily found.</p>
+    </div>
+
+    <h3>Key Story Analysis</h3>
+
+    <div class="analysis-box">
+      <p><strong>Opening Characterization</strong></p>
+      <p><strong>Device/Technique:</strong> characterization, setup</p>
+      <p><strong>How it is used:</strong> Caleb is introduced through repeated pranks, which reveal his personality before the central conflict begins.</p>
+      <p><strong>Word choice:</strong> Words such as <em>tricks</em>, <em>laughed</em>, and <em>joke</em> sound playful at first, but repetition makes the behavior feel irresponsible.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>Jonah’s Warning</strong></p>
+      <p><strong>Device/Technique:</strong> dialogue, foreshadowing</p>
+      <p><strong>How it is used:</strong> Jonah’s words predict the story’s outcome. The warning is a clue that trust will become the central issue.</p>
+      <p><strong>Word choice:</strong> The word <em>trusting</em> introduces the moral lesson before the tragedy happens.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>The False Goat Alarm</strong></p>
+      <p><strong>Device/Technique:</strong> pivotal incident, plot shift</p>
+      <p><strong>How it is used:</strong> This prank changes how villagers react to Caleb. It is the event that directly damages his credibility.</p>
+      <p><strong>Word choice:</strong> The scene emphasizes deception rather than harmless fun.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>Villagers Misread the Danger</strong></p>
+      <p><strong>Device/Technique:</strong> irony, suspense, point of view effect</p>
+      <p><strong>How it is used:</strong> Readers know Caleb is in real danger, but the villagers think it is another trick. This difference creates suspense.</p>
+      <p><strong>Word choice:</strong> Phrases such as <em>probably another silly trick</em> and <em>only sighed</em> show how completely trust has been lost.</p>
+    </div>
+
+    <div class="analysis-box">
+      <p><strong>Ending Lesson</strong></p>
+      <p><strong>Device/Technique:</strong> theme, resolution</p>
+      <p><strong>How it is used:</strong> The final sentence states the lasting message clearly: trust is difficult to recover once it is destroyed.</p>
+      <p><strong>Word choice:</strong> <em>Quietly remembered the lesson</em> leaves the story with a solemn, reflective tone.</p>
+    </div>
+
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-rl83" class="card hidden">
+    <h2>RL.7.1 with the Story</h2>
+    <div class="standard-box">
+      <p><strong>What the standard says:</strong> Cite several pieces of textual evidence to support analysis of what the story says directly and what it suggests indirectly.</p>
+    </div>
+
+    <div class="hint-box">
+      <div class="hint-title">Animated Thinking Hint</div>
+      <div class="thinking">
+        <span>Ask: Which event changes what happens next, and what does it reveal about Caleb?</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </div>
+      <button class="hint-toggle" data-target="hint83">Show Hint</button>
+      <div id="hint83" class="hint-content">Look for the moment when the villagers stop trusting Caleb. That incident changes the outcome of the story.</div>
+    </div>
+
+    <h3>Modeled Example 1: Incident Revealing Character</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> Which event most strongly reveals Caleb’s refusal to take Jonah’s warning seriously?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. Caleb laughs and promises tomorrow’s joke will be even better.<br>
+      B. Caleb walks near the forest.<br>
+      C. Caleb tries to climb out of the pit.<br>
+      D. Caleb searches for the villagers.</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> Caleb directly responds to the warning by laughing and planning another joke. That reveals stubbornness and carelessness about consequences.</p>
+        <p><strong>Correct Answer:</strong> A. Caleb laughs and promises tomorrow’s joke will be even better.</p>
+      </div>
+    </div>
+
+    <h3>Modeled Example 2: Incident Propelling Action</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> Which incident most directly causes the villagers to ignore Caleb when he truly needs help?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. Caleb wakes up with new prank ideas.<br>
+      B. Caleb pretends a wild goat has escaped.<br>
+      C. Caleb wanders near the forest in autumn.<br>
+      D. Caleb hears thunder in the distance.</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> The false goat alarm teaches villagers not to believe him. After that prank, later cries are dismissed as tricks.</p>
+        <p><strong>Correct Answer:</strong> B. Caleb pretends a wild goat has escaped.</p>
+      </div>
+    </div>
+
+    <div class="question-block" id="rl83q1"></div>
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-rl86" class="card hidden">
+    <h2>RL.7.6 with the Story</h2>
+    <div class="standard-box">
+      <p><strong>What the standard says:</strong> Analyze how the author develops and contrasts the points of view of different characters.</p>
+    </div>
+
+    <div class="hint-box">
+      <div class="hint-title">Animated Thinking Hint</div>
+      <div class="thinking">
+        <span>Ask: What does the reader understand about Caleb’s danger that the villagers do not believe?</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </div>
+      <button class="hint-toggle" data-target="hint86">Show Hint</button>
+      <div id="hint86" class="hint-content">Suspense often happens when readers know something is real and urgent, but characters dismiss or misunderstand it.</div>
+    </div>
+
+    <h3>Modeled Example 1: Reader vs. Character</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> How does the difference between the reader’s understanding and the villagers’ understanding create suspense?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. Readers know Caleb is trapped and in danger, but the villagers assume he is joking again.<br>
+      B. Readers know the rain will stop quickly, but Caleb does not.<br>
+      C. Readers understand Jonah planned the accident.<br>
+      D. Readers know the hole is shallow, but Caleb does not.</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> The reader sees Caleb’s real danger clearly. The villagers, however, interpret his cries through the lens of his past tricks. That difference creates suspense because readers know the danger is real while the villagers dismiss it.</p>
+        <p><strong>Correct Answer:</strong> A. Readers know Caleb is trapped and in danger, but the villagers assume he is joking again.</p>
+      </div>
+    </div>
+
+    <h3>Modeled Example 2: Effect of the Difference in Understanding</h3>
+    <div class="model-box">
+      <p><strong>EOG-Type Question:</strong> What effect does this difference in point of view have on the story?</p>
+      <p><strong>Answer Choices:</strong></p>
+      <p>A. It creates humor because readers know Caleb deserves it.<br>
+      B. It creates suspense and tragedy because the reader anticipates a terrible outcome before the villagers do.<br>
+      C. It makes the story confusing because the plot is unclear.<br>
+      D. It makes the villagers appear heroic.</p>
+      <div class="answer-demo">
+        <p><strong>How to answer using the text:</strong> Since the reader understands the danger but the villagers do not respond, the tension grows. The reader fears what will happen before the tragedy is fully revealed.</p>
+        <p><strong>Correct Answer:</strong> B. It creates suspense and tragedy because the reader anticipates a terrible outcome before the villagers do.</p>
+      </div>
+    </div>
+
+    <div class="question-block" id="rl86q1"></div>
+
+    <div class="drag-shell">
+      <h3>Drag-and-Drop Evidence</h3>
+      <p><strong>Directions:</strong> Drag the strongest piece of evidence into the drop zone to support the claim: <em>The villagers no longer trust Caleb.</em></p>
+      <div id="dragBankStory" class="drag-bank">
+        <div class="drag-item" draggable="true" data-correct="false" data-group="storydrag">Dark clouds gathered quietly above the hills.</div>
+        <div class="drag-item" draggable="true" data-correct="true" data-group="storydrag">After that, the villagers began ignoring most of the things Caleb said.</div>
+        <div class="drag-item" draggable="true" data-correct="false" data-group="storydrag">Caleb wandered near the edge of the forest.</div>
+        <div class="drag-item" draggable="true" data-correct="false" data-group="storydrag">Thunder rumbled in the distance like a warning drum.</div>
+      </div>
+      <div id="dropZoneStory" class="drop-zone">Drop the strongest evidence here</div>
+      <p id="dragResultStory" class="small-note"></p>
+    </div>
+
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-wrapintro" class="card hidden">
+    <h2>Wrap-Up Practice</h2>
+    <p>You will now apply what you learned to a <strong>new poem</strong> and a <strong>new short story</strong>. The poem appears first with its four questions. The story appears next with its eight questions.</p>
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Next</button>
+    </div>
+  </section>
+
+  <section id="screen-wrapPoem" class="card hidden">
+    <h2>Wrap-Up Poem</h2>
+    <div class="text-box poem-box">i wish he would see me...
+
+A stranger walked through classroom doors one day,
+His quiet smile stole all my thoughts away.
+
+His dark eyes shone like sunlight after rain,
+And somehow warmed the corners of my brain.
+
+I traced his name in margins of my page,
+A secret dream I hid from friends my age.
+
+He laughed with others down the crowded hall,
+Yet never seemed to notice me at all.
+
+My hopeful heart would race when he walked by,
+But courage faded each time I would try.
+
+So love remained a whisper in my chest,
+A silent wish I buried with the rest.</div>
+
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Go to Poem Questions</button>
+    </div>
+  </section>
+
+  <section id="screen-wrapPoemQ" class="card hidden">
+    <h2>Wrap-Up Poem Questions</h2>
+    <div id="poemPracticeQuestions"></div>
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Continue to Story</button>
+    </div>
+  </section>
+
+  <section id="screen-wrapStory" class="card hidden">
+    <h2>Wrap-Up Story</h2>
+    <div class="text-box">
+      <p>When Maya was twelve years old, her father left home without much explanation.</p>
+      <p>The house that once felt warm suddenly felt quiet and unfamiliar.</p>
+      <p>Her mother tried to stay strong, but Maya could see the sadness in her eyes.</p>
+      <p>For months it was just the two of them trying to adjust to the change.</p>
+      <p>Then one day her mother told her she had met someone new.</p>
+      <p>His name was Mr. Carter, and he seemed kind and patient.</p>
+      <p>Maya did not want to hear anything about him.</p>
+      <p>She felt that liking someone new meant forgetting her father.</p>
+      <p>Soon her mother and Mr. Carter got married.</p>
+      <p>With him came his daughter, Lila, who was the same age as Maya.</p>
+      <p>Lila moved into their house with a bright smile and hopeful attitude.</p>
+      <p>Maya refused to share that happiness.</p>
+      <p>She barely spoke to Lila during the first few weeks.</p>
+      <p>Whenever they were in the same room, Maya would sigh loudly or walk away.</p>
+      <p>Lila tried to be friendly and ask questions about school.</p>
+      <p>Maya answered with short, cold responses.</p>
+      <p>At dinner, Maya kept her eyes on her plate.</p>
+      <p>She believed that if she ignored them long enough, things would go back to normal.</p>
+      <p>Mr. Carter never raised his voice or forced conversation.</p>
+      <p>He simply tried to be kind whenever he could.</p>
+      <p>Still, Maya built a wall around her feelings.</p>
+      <p>Months passed with the same tension in the house.</p>
+      <p>Then spring arrived, and the school talent show was announced.</p>
+      <p>Maya had signed up months earlier to perform a spoken-word poem.</p>
+      <p>It was something she loved to do because poetry helped her express her emotions.</p>
+      <p>She practiced quietly in her room after school each day.</p>
+      <p>Lila sometimes heard Maya rehearsing through the hallway.</p>
+      <p>She thought Maya sounded amazing but never interrupted.</p>
+      <p>The night of the rehearsal finally arrived.</p>
+      <p>Students gathered in the auditorium to practice their performances.</p>
+      <p>Maya stood backstage, holding her notebook tightly.</p>
+      <p>Her hands were shaking as she waited for her turn.</p>
+      <p>Suddenly a group of girls began whispering and giggling nearby.</p>
+      <p>They mocked Maya’s poem and laughed at the way she held her notes.</p>
+      <p>Their cruel words made Maya’s confidence disappear.</p>
+      <p>When her name was called, she froze.</p>
+      <p>She tried to speak but the words would not come out.</p>
+      <p>Tears filled her eyes as she rushed off the stage.</p>
+      <p>The girls laughed even louder behind her.</p>
+      <p>Just then Lila stepped forward from the audience.</p>
+      <p>She had seen everything that happened.</p>
+      <p>Without hesitation she told the girls to stop being cruel.</p>
+      <p>Her voice was firm and protective.</p>
+      <p>She immediately went to the teacher supervising the rehearsal.</p>
+      <p>The teacher quickly addressed the situation and spoke to the girls.</p>
+      <p>Meanwhile Maya sat alone in the hallway wiping her eyes.</p>
+      <p>Lila quietly walked over and sat beside her.</p>
+      <p>She told Maya that the poem was beautiful and deserved to be heard.</p>
+      <p>At first Maya said nothing.</p>
+      <p>Then she softly asked how Lila knew the poem was good.</p>
+      <p>Lila admitted she had heard Maya practicing at home many times.</p>
+      <p>She said Maya’s voice sounded powerful and real.</p>
+      <p>Those words surprised Maya.</p>
+      <p>No one had ever defended her like that before.</p>
+      <p>That evening Lila offered to help Maya practice.</p>
+      <p>They sat together in the living room reading the poem again and again.</p>
+      <p>Lila helped Maya slow down and breathe between lines.</p>
+      <p>Mr. Carter and Maya’s mother listened quietly from the kitchen.</p>
+      <p>They smiled as they heard the girls laughing together.</p>
+      <p>Over the next few days the practice continued.</p>
+      <p>Each time Maya grew more confident.</p>
+      <p>Finally the night of the talent show arrived.</p>
+      <p>The auditorium was filled with students, parents, and teachers.</p>
+      <p>When Maya’s name was called, she looked at Lila in the front row.</p>
+      <p>Lila gave her a thumbs-up and a big encouraging smile.</p>
+      <p>Maya stepped onto the stage and began her poem.</p>
+      <p>Her voice started softly but grew stronger with each line.</p>
+      <p>The audience became completely silent as they listened.</p>
+      <p>When she finished, the room erupted with applause.</p>
+      <p>Maya felt a wave of pride she had never experienced before.</p>
+      <p>After the show she ran straight to Lila and hugged her tightly.</p>
+      <p>From that day on the two girls became very close friends.</p>
+      <p>Maya slowly began to open her heart to Mr. Carter as well.</p>
+      <p>The house that once felt broken slowly became a place of healing and belonging.</p>
+    </div>
+
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button data-nav="next">Go to Story Questions</button>
+    </div>
+  </section>
+
+  <section id="screen-wrapStoryQ" class="card hidden">
+    <h2>Wrap-Up Story Questions</h2>
+    <div id="storyPracticeQuestions"></div>
+    <div class="nav">
+      <button data-nav="back">Back</button>
+      <button id="submitBtn">Submit</button>
+    </div>
+  </section>
+
+  <section id="screen-results" class="card hidden">
+    <h2>Results</h2>
+    <div id="resultsArea"></div>
+    <div class="nav">
+      <button id="retryBtn">Try Again</button>
+      <button id="certBtn" class="hidden">View Gold Certificate</button>
+    </div>
+  </section>
+
+  <section id="screen-certificate" class="card hidden">
+    <div class="certificate" id="certificatePrintable">
+      <h1 style="color:#9c7408;">Gold Certificate of Mastery</h1>
+      <p>This certifies that</p>
+      <h2 id="certStudentName" style="border:none; margin-bottom:0; color:#8d2348;"></h2>
+      <p>has successfully demonstrated mastery of</p>
+      <p><strong>RL.7.1, RL.7.2, RL.7.4, and RL.7.6</strong></p>
+      <div class="seal">★</div>
+      <div class="score-box">Final Score: <span id="certScore"></span>%</div>
+      <p id="certDate"></p>
+      <p>Excellent work in reading closely, citing evidence, and analyzing literature.</p>
+      <p style="margin-top:24px;font-weight:bold;color:#9c7408;">Created by DWRM, M.Ed</p>
+    </div>
+    <div class="nav">
+      <button id="printBtn">Print Certificate</button>
+      <button id="homeBtn">Return Home</button>
+    </div>
+  </section>
+
+  <div class="footer-note">Created by DWRM, M.Ed</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  document.addEventListener("copy", function(e){ e.preventDefault(); });
+  document.addEventListener("cut", function(e){ e.preventDefault(); });
+  document.addEventListener("paste", function(e){ e.preventDefault(); });
+  document.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+  const screens = [
+    "screen-home",
+    "screen-overview",
+    "screen-poemstudy",
+    "screen-rl82",
+    "screen-rl84",
+    "screen-storystudy",
+    "screen-rl83",
+    "screen-rl86",
+    "screen-wrapintro",
+    "screen-wrapPoem",
+    "screen-wrapPoemQ",
+    "screen-wrapStory",
+    "screen-wrapStoryQ",
+    "screen-results",
+    "screen-certificate"
+  ];
+
+  let currentScreen = 0;
+  let studentName = "";
+  let submitted = false;
+  let answers = {};
+  let mainAnswerKey = {};
+  let poemPracticeAnswerKey = {};
+  let storyPracticeAnswerKey = {};
+  let poemDragCorrect = false;
+  let storyDragCorrect = false;
+
+  const progressBar = document.getElementById("progressBar");
+  const progressLabel = document.getElementById("progressLabel");
+
+  function showScreen(index){
+    currentScreen = index;
+    screens.forEach(function(id, i){
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hidden", i !== index);
+    });
+    updateProgress();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function updateProgress(){
+    const percent = Math.round((currentScreen / (screens.length - 1)) * 100);
+    progressBar.style.width = percent + "%";
+    progressLabel.textContent = "Progress: " + percent + "%";
+  }
+
+  function shuffleArray(arr){
+    const copy = arr.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function attachHintButtons(){
+    document.querySelectorAll(".hint-toggle").forEach(function(btn){
+      btn.onclick = function(){
+        const target = btn.getAttribute("data-target");
+        const box = document.getElementById(target);
+        if (box) box.classList.toggle("show");
+      };
+    });
+  }
+
+  function renderCheckQuestion(containerId, qObj){
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = "";
+
+    const wrap = document.createElement("div");
+    wrap.innerHTML =
+      '<p><strong>' + qObj.label + '</strong> ' + qObj.question + '</p>' +
+      '<p class="small-note">' + qObj.dok + '</p>';
+
+    const optionHolder = document.createElement("div");
+    const feedback = document.createElement("div");
+    feedback.className = "feedback-box";
+
+    shuffleArray(qObj.options).forEach(function(opt){
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = opt;
+
+      div.addEventListener("click", function(){
+        if (div.dataset.locked === "true") return;
+        answers[qObj.id] = opt;
+
+        optionHolder.querySelectorAll(".option").forEach(function(el){
+          el.dataset.locked = "true";
+          if (el.textContent === qObj.answer) el.classList.add("correct");
+          if (el.textContent === opt && opt !== qObj.answer) el.classList.add("incorrect");
+        });
+
+        if (opt === qObj.answer){
+          feedback.className = "feedback-box feedback-correct show";
+          feedback.innerHTML =
+            "<p><strong>Correct.</strong></p>" +
+            "<p><strong>Why this is the best answer:</strong> " + qObj.explanation + "</p>";
+        } else {
+          feedback.className = "feedback-box feedback-wrong show";
+          feedback.innerHTML =
+            "<p><strong>Not quite.</strong></p>" +
+            "<p><strong>Correct Answer:</strong> " + qObj.answer + "</p>" +
+            "<p><strong>Why this answer is the most suitable:</strong> " + qObj.explanation + "</p>" +
+            "<p><strong>Why your answer is not the best fit:</strong> " + qObj.wrongReason + "</p>";
+        }
+      });
+
+      optionHolder.appendChild(div);
+    });
+
+    wrap.appendChild(optionHolder);
+    wrap.appendChild(feedback);
+    container.appendChild(wrap);
+  }
+
+  function renderPracticeQuestions(containerId, data, answerStore){
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    Object.keys(answerStore).forEach(function(k){ delete answerStore[k]; });
+
+    data.forEach(function(qObj){
+      answerStore[qObj.id] = qObj.answer;
+
+      const block = document.createElement("div");
+      block.className = "question-block";
+      block.id = "block-" + qObj.id;
+
+      const title = document.createElement("p");
+      title.innerHTML = "<strong>" + qObj.label + "</strong> " + qObj.question + "<br><span class='small-note'>" + qObj.dok + "</span>";
+      block.appendChild(title);
+
+      shuffleArray(qObj.options).forEach(function(opt){
+        const option = document.createElement("div");
+        option.className = "option";
+        option.textContent = opt;
+        option.addEventListener("click", function(){
+          if (submitted) return;
+          answers[qObj.id] = opt;
+          block.querySelectorAll(".option").forEach(function(el){
+            el.classList.remove("selected");
+          });
+          option.classList.add("selected");
+        });
+        block.appendChild(option);
+      });
+
+      container.appendChild(block);
+    });
+  }
+
+  function markPractice(answerKey){
+    Object.keys(answerKey).forEach(function(id){
+      const block = document.getElementById("block-" + id);
+      if (!block) return;
+      block.querySelectorAll(".option").forEach(function(opt){
+        if (opt.textContent === answerKey[id]) opt.classList.add("correct");
+        if (answers[id] === opt.textContent && answers[id] !== answerKey[id]) {
+          opt.classList.add("incorrect");
+        }
+      });
+    });
+  }
+
+  function scoreAll(){
+    const allKeys = Object.assign({}, mainAnswerKey, poemPracticeAnswerKey, storyPracticeAnswerKey);
+    let correct = 0;
+    let total = Object.keys(allKeys).length + 2;
+
+    Object.keys(allKeys).forEach(function(key){
+      if (answers[key] === allKeys[key]) correct++;
+    });
+
+    if (poemDragCorrect) correct++;
+    if (storyDragCorrect) correct++;
+
+    return {
+      correct: correct,
+      total: total,
+      percent: Math.round((correct / total) * 100)
+    };
+  }
+
+  function submitPractice(){
+    submitted = true;
+    markPractice(poemPracticeAnswerKey);
+    markPractice(storyPracticeAnswerKey);
+
+    const result = scoreAll();
+    const area = document.getElementById("resultsArea");
+    const certBtn = document.getElementById("certBtn");
+
+    area.innerHTML =
+      "<p><strong>" + studentName + "</strong>, you answered <strong>" + result.correct + "</strong> out of <strong>" + result.total + "</strong> scored items correctly.</p>" +
+      "<p class='score-box'>Your Score: " + result.percent + "%</p>" +
+      (result.percent >= 80
+        ? "<div class='standard-box'><p>Congratulations. You earned your gold certificate because you reached the mastery goal of 80% or higher.</p></div>"
+        : "<div class='warning'><p>You did not reach 80% yet. Review the standards, reread both texts carefully, and try again.</p></div>"
+      );
+
+    certBtn.classList.toggle("hidden", result.percent < 80);
+    document.getElementById("certStudentName").textContent = studentName;
+    document.getElementById("certScore").textContent = result.percent;
+    document.getElementById("certDate").textContent = "Awarded on " + new Date().toLocaleDateString();
+
+    showScreen(13);
+  }
+
+  function fullReset(){
+    answers = {};
+    submitted = false;
+    poemDragCorrect = false;
+    storyDragCorrect = false;
+
+    document.getElementById("poemPracticeQuestions").innerHTML = "";
+    document.getElementById("storyPracticeQuestions").innerHTML = "";
+
+    const poemZone = document.getElementById("dropZonePoem");
+    poemZone.textContent = "Drop the strongest evidence here";
+    poemZone.classList.remove("filled");
+    document.getElementById("dragResultPoem").textContent = "";
+
+    const storyZone = document.getElementById("dropZoneStory");
+    storyZone.textContent = "Drop the strongest evidence here";
+    storyZone.classList.remove("filled");
+    document.getElementById("dragResultStory").textContent = "";
+
+    setupPoemAnnotation();
+    renderMainQuestions();
+    renderWrapQuestions();
+    setupDragDrop();
+    attachHintButtons();
+    showScreen(0);
+  }
+
+  function setupDragDrop(){
+    setupSingleDrag("poemdrag", "dropZonePoem", "dragResultPoem", function(correct){
+      poemDragCorrect = correct;
+    }, "Correct. This evidence directly shows technology replacing a natural image.", "Not the strongest choice. This detail relates to the poem, but it does not most directly prove replacement.");
+
+    setupSingleDrag("storydrag", "dropZoneStory", "dragResultStory", function(correct){
+      storyDragCorrect = correct;
+    }, "Correct. This evidence directly proves the villagers had already stopped trusting Caleb.", "Not the strongest choice. This detail relates to the story, but it does not most directly prove lost trust.");
+  }
+
+  function setupSingleDrag(groupName, zoneId, resultId, callback, goodMsg, badMsg){
+    const zone = document.getElementById(zoneId);
+    const result = document.getElementById(resultId);
+    if (!zone) return;
+
+    zone.addEventListener("dragover", function(e){
+      e.preventDefault();
+    });
+
+    zone.addEventListener("drop", function(e){
+      e.preventDefault();
+      if (submitted) return;
+
+      const text = e.dataTransfer.getData("text/plain");
+      const correct = e.dataTransfer.getData("correct") === "true";
+
+      zone.textContent = text;
+      zone.classList.add("filled");
+      callback(correct);
+
+      if (correct){
+        result.textContent = goodMsg;
+        result.style.color = "#8c6610";
+      } else {
+        result.textContent = badMsg;
+        result.style.color = "#8d2348";
+      }
+    });
+
+    document.querySelectorAll(".drag-item[data-group='" + groupName + "']").forEach(function(item){
+      item.addEventListener("dragstart", function(e){
+        e.dataTransfer.setData("text/plain", item.textContent);
+        e.dataTransfer.setData("correct", item.dataset.correct);
+      });
+    });
+  }
+
+  const annotationInfo = {
+    1: {
+      theme:"This line introduces nature as peaceful, bright, and beautiful. It begins the contrast the theme depends on.",
+      figurative:"“The meadow wakes” is personification, and “threads of gold” is a metaphor for sunlight.",
+      tone:"Words such as “gold” and “quiet” create a calm, admiring tone."
+    },
+    2: {
+      theme:"This line continues building the poem’s appreciation for nature before the shift to technology.",
+      figurative:"“Wind combs” is personification because wind is given a human action.",
+      tone:"“Soft,” “emerald,” and “rising sun” keep the tone gentle and peaceful."
+    },
+    3: {
+      theme:"This line begins the shift from beauty in nature to human technology.",
+      figurative:"“Silver screens” symbolizes digital technology rather than literal silver objects.",
+      tone:"The word “But” signals contrast, and “hum” introduces an uneasy mechanical sound."
+    },
+    4: {
+      theme:"This line shows technology spreading into space once shared by birds, deepening the poem’s warning.",
+      figurative:"“Fog of signals” is a metaphor for invisible technological spread.",
+      tone:"“Silent fog” feels invasive and unsettling, which changes the tone."
+    },
+    5: {
+      theme:"This line briefly restores the dignity and strength of nature, which makes the later invasion feel more serious.",
+      figurative:"“Mountains breathe” is personification.",
+      tone:"“Ancient calm” gives the line a timeless, majestic tone."
+    },
+    6: {
+      theme:"This line shows technology spreading through nature rather than staying separate from it.",
+      figurative:"“Like metal vines” is a simile comparing wires to plant growth.",
+      tone:"The word “creep” has a negative connotation and creates unease."
+    },
+    7: {
+      theme:"This line most directly shows technology replacing natural beauty.",
+      figurative:"Fireflies and screens work symbolically in contrast.",
+      tone:"The loss feels sad because “danced” gives the fireflies a magical quality."
+    },
+    8: {
+      theme:"The ending shows the final cost of technological takeover: even the stars are hidden.",
+      figurative:"“Smog of endless buzzing lights” is a metaphor for overwhelming artificial light.",
+      tone:"Words like “smog,” “endless,” “buzzing,” and “dims” create a negative, oppressive tone."
+    }
+  };
+
+  let activeTool = "theme";
+
+  function setupPoemAnnotation(){
+    const lines = document.querySelectorAll(".poem-line");
+    const notes = document.getElementById("annotationNotes");
+    const toolButtons = document.querySelectorAll(".tool-btn[data-tool]");
+
+    toolButtons.forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.tool === activeTool);
+      btn.onclick = function(){
+        activeTool = btn.dataset.tool;
+        toolButtons.forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+      };
+    });
+
+    document.getElementById("clearAnnotationsBtn").onclick = function(){
+      lines.forEach(function(line){
+        line.classList.remove("hl-theme", "hl-figurative", "hl-tone");
+      });
+      notes.innerHTML = "<strong>Annotation Notes:</strong><p>Select a line to see a teaching note here.</p>";
+    };
+
+    lines.forEach(function(line){
+      line.onclick = function(){
+        const lineNum = line.dataset.line;
+        if (activeTool === "theme") {
+          line.classList.toggle("hl-theme");
+        } else if (activeTool === "figurative") {
+          line.classList.toggle("hl-figurative");
+        } else if (activeTool === "tone") {
+          line.classList.toggle("hl-tone");
+        }
+        const label = activeTool === "theme" ? "Theme Clue" : activeTool === "figurative" ? "Figurative Language" : "Tone / Word Choice";
+        notes.innerHTML = "<strong>Annotation Notes:</strong><p><strong>Line " + lineNum + " — " + label + ":</strong> " + annotationInfo[lineNum][activeTool] + "</p>";
+      };
+    });
+  }
+
+  function renderMainQuestions(){
+    renderCheckQuestion("rl82q1", {
+      id:"rl82main",
+      label:"RL.7.2 Check",
+      dok:"DOK 4",
+      question:"Which detail best supports the theme that technology is slowly taking the place of natural beauty?",
+      options:[
+        "Bright screens replace the firefly glow that danced through summer night.",
+        "The mountains breathe in ancient calm, their shadows deep and wide.",
+        "Soft wind combs through the emerald grass beneath the rising sun.",
+        "Quiet rivers run beneath the rising sun."
+      ],
+      answer:"Bright screens replace the firefly glow that danced through summer night.",
+      explanation:"This line directly shows technology replacing a natural image. Fireflies represent beauty in nature, and screens take their place.",
+      wrongReason:"The other choices describe nature itself, but they do not directly show replacement or loss caused by technology."
+    });
+
+    renderCheckQuestion("rl84q1", {
+      id:"rl84main",
+      label:"RL.7.4 Check",
+      dok:"DOK 4",
+      question:"How does the word “creep” affect the meaning and tone of the line “Yet wires creep like metal vines along the forest side”?",
+      options:[
+        "It gives the spread of wires a stealthy, unwelcome feeling.",
+        "It makes the wires seem playful and harmless.",
+        "It shows that the wires are weak and fragile.",
+        "It suggests that the wires move quickly and violently."
+      ],
+      answer:"It gives the spread of wires a stealthy, unwelcome feeling.",
+      explanation:"The word “creep” carries a negative connotation. It suggests slow, unwanted movement and helps create an uneasy tone.",
+      wrongReason:"The other answers either soften the meaning too much or exaggerate it in ways the word does not support."
+    });
+
+    renderCheckQuestion("rl83q1", {
+      id:"rl83main",
+      label:"RL.7.1 Check",
+      dok:"DOK 4",
+      question:"Which piece of evidence best supports the inference that the villagers no longer trust Caleb?",
+      options:[
+        "After that, the villagers began ignoring most of the things Caleb said.",
+        "Dark clouds gathered quietly above the hills.",
+        "Caleb loved playing tricks on everyone he met.",
+        "The wind began to rustle through the dry leaves on the ground."
+      ],
+      answer:"After that, the villagers began ignoring most of the things Caleb said.",
+      explanation:"This sentence directly proves the villagers lost trust in Caleb. It is the clearest evidence for the inference.",
+      wrongReason:"The other choices add background details, but they do not directly prove that the villagers stopped trusting Caleb."
+    });
+
+    renderCheckQuestion("rl86q1", {
+      id:"rl86main",
+      label:"RL.7.6 Check",
+      dok:"DOK 4",
+      question:"How do Caleb and the villagers view his cries for help differently?",
+      options:[
+        "Caleb knows he is in real danger, but the villagers believe he is joking again.",
+        "Caleb thinks the rain is harmless, but the villagers know it is deadly.",
+        "Caleb believes Jonah will rescue him, but the villagers disagree.",
+        "Caleb thinks the hole is shallow, but the villagers know it is deep."
+      ],
+      answer:"Caleb knows he is in real danger, but the villagers believe he is joking again.",
+      explanation:"Caleb’s point of view is urgent and frightened because he is trapped. The villagers’ point of view is dismissive because they believe he is playing another prank.",
+      wrongReason:"The other choices add details the story does not actually state."
+    });
+
+    mainAnswerKey = {
+      rl82main:"Bright screens replace the firefly glow that danced through summer night.",
+      rl84main:"It gives the spread of wires a stealthy, unwelcome feeling.",
+      rl83main:"After that, the villagers began ignoring most of the things Caleb said.",
+      rl86main:"Caleb knows he is in real danger, but the villagers believe he is joking again."
+    };
+  }
+
+  function renderWrapQuestions(){
+    const poemData = [
+      {
+        id:"p1",
+        label:"Poem Question 1",
+        dok:"DOK 3 • RL.7.2",
+        question:"Which statement best expresses a theme of the poem?",
+        options:[
+          "Unspoken feelings can remain hidden when fear overpowers courage.",
+          "Classrooms are the best places to meet new friends.",
+          "Young people should never trust first impressions.",
+          "Dreams always become real with enough patience."
+        ],
+        answer:"Unspoken feelings can remain hidden when fear overpowers courage."
+      },
+      {
+        id:"p2",
+        label:"Poem Question 2",
+        dok:"DOK 4 • RL.7.2",
+        question:"How does the speaker develop the poem’s central idea over the course of the text?",
+        options:[
+          "By moving from admiration and excitement to silence and buried emotion",
+          "By comparing one student to many strangers",
+          "By describing a friendship that becomes stronger",
+          "By showing that the speaker eventually confesses her feelings"
+        ],
+        answer:"By moving from admiration and excitement to silence and buried emotion"
+      },
+      {
+        id:"p3",
+        label:"Poem Question 3",
+        dok:"DOK 3 • RL.7.4",
+        question:"What does the phrase “His dark eyes shone like sunlight after rain” suggest about the speaker’s view of the boy?",
+        options:[
+          "She sees him as bright, comforting, and full of hope.",
+          "She thinks he looks tired and distant.",
+          "She believes he is hiding something dangerous.",
+          "She sees him as ordinary and unimportant."
+        ],
+        answer:"She sees him as bright, comforting, and full of hope."
+      },
+      {
+        id:"p4",
+        label:"Poem Question 4",
+        dok:"DOK 4 • RL.7.4",
+        question:"How does the phrase “love remained a whisper in my chest” affect the poem’s tone and meaning?",
+        options:[
+          "It creates a quiet, restrained tone and shows that the feeling stays hidden rather than spoken.",
+          "It creates a humorous tone by making love seem silly.",
+          "It creates an angry tone by blaming the boy.",
+          "It creates a triumphant tone because the speaker feels confident."
+        ],
+        answer:"It creates a quiet, restrained tone and shows that the feeling stays hidden rather than spoken."
+      }
+    ];
+
+    const storyData = [
+      {
+        id:"s1",
+        label:"Story Question 1",
+        dok:"DOK 3 • RL.7.2",
+        question:"Which statement best expresses a theme of the story?",
+        options:[
+          "Healing can begin when people allow kindness and support into places hurt by loss.",
+          "Talent shows are the best way to solve family problems.",
+          "People should avoid blending families whenever possible.",
+          "Poetry matters more than friendship."
+        ],
+        answer:"Healing can begin when people allow kindness and support into places hurt by loss."
+      },
+      {
+        id:"s2",
+        label:"Story Question 2",
+        dok:"DOK 4 • RL.7.2",
+        question:"How does the story develop its theme over time?",
+        options:[
+          "It moves from Maya’s grief and resistance to acceptance, confidence, and belonging through Lila’s kindness.",
+          "It focuses mainly on the talent show and ignores Maya’s feelings.",
+          "It proves that Maya’s mother is wrong to remarry.",
+          "It shows that Maya only changes because the audience applauds."
+        ],
+        answer:"It moves from Maya’s grief and resistance to acceptance, confidence, and belonging through Lila’s kindness."
+      },
+      {
+        id:"s3",
+        label:"Story Question 3",
+        dok:"DOK 3 • RL.7.1",
+        question:"Which detail best supports the inference that Maya is emotionally guarded at the beginning of the story?",
+        options:[
+          "Whenever they were in the same room, Maya would sigh loudly or walk away.",
+          "Lila moved into their house with a bright smile and hopeful attitude.",
+          "The school talent show was announced in the spring.",
+          "Students gathered in the auditorium to practice their performances."
+        ],
+        answer:"Whenever they were in the same room, Maya would sigh loudly or walk away."
+      },
+      {
+        id:"s4",
+        label:"Story Question 4",
+        dok:"DOK 4 • RL.7.1",
+        question:"Which sentence best supports the idea that Lila becomes the turning point in Maya’s healing?",
+        options:[
+          "That evening Lila offered to help Maya practice.",
+          "At dinner, Maya kept her eyes on her plate.",
+          "Months passed with the same tension in the house.",
+          "The auditorium was filled with students, parents, and teachers."
+        ],
+        answer:"That evening Lila offered to help Maya practice."
+      },
+      {
+        id:"s5",
+        label:"Story Question 5",
+        dok:"DOK 3 • RL.7.4",
+        question:"What does the phrase “Maya built a wall around her feelings” most likely mean?",
+        options:[
+          "She emotionally shut others out to protect herself from more pain.",
+          "She literally avoided people by staying inside her room.",
+          "She became angry enough to break things in the house.",
+          "She wanted the family to move away."
+        ],
+        answer:"She emotionally shut others out to protect herself from more pain."
+      },
+      {
+        id:"s6",
+        label:"Story Question 6",
+        dok:"DOK 4 • RL.7.4",
+        question:"How does the description of the house as “quiet and unfamiliar” affect the story’s mood at the beginning?",
+        options:[
+          "It creates a mood of loss and emotional displacement.",
+          "It creates a cheerful mood because the house feels peaceful.",
+          "It creates suspense because the house is dangerous.",
+          "It creates humor because Maya is exaggerating."
+        ],
+        answer:"It creates a mood of loss and emotional displacement."
+      },
+      {
+        id:"s7",
+        label:"Story Question 7",
+        dok:"DOK 3 • RL.7.6",
+        question:"How does Maya’s point of view about Lila differ from Lila’s point of view about Maya early in the story?",
+        options:[
+          "Maya sees Lila as part of an unwanted change, while Lila sees Maya as someone worth understanding and encouraging.",
+          "Maya believes Lila dislikes poetry, while Lila wants to perform herself.",
+          "Maya wants friendship right away, while Lila avoids her completely.",
+          "Maya sees the family as healed, while Lila believes it is broken forever."
+        ],
+        answer:"Maya sees Lila as part of an unwanted change, while Lila sees Maya as someone worth understanding and encouraging."
+      },
+      {
+        id:"s8",
+        label:"Story Question 8",
+        dok:"DOK 4 • RL.7.6",
+        question:"What effect does the contrast in Maya’s and Lila’s points of view have on the story?",
+        options:[
+          "It builds tension at first and then makes Maya’s change feel more meaningful when she finally accepts Lila’s kindness.",
+          "It creates humor because both girls are trying to trick each other.",
+          "It makes the story confusing because neither girl has clear feelings.",
+          "It shows that the girls can never become friends."
+        ],
+        answer:"It builds tension at first and then makes Maya’s change feel more meaningful when she finally accepts Lila’s kindness."
+      }
+    ];
+
+    renderPracticeQuestions("poemPracticeQuestions", poemData, poemPracticeAnswerKey);
+    renderPracticeQuestions("storyPracticeQuestions", storyData, storyPracticeAnswerKey);
+  }
+
+  document.getElementById("startBtn").addEventListener("click", function(){
+    const name = document.getElementById("studentName").value.trim();
+    if (!name){
+      alert("Please enter your name before beginning.");
+      return;
+    }
+    studentName = name;
+    renderMainQuestions();
+    renderWrapQuestions();
+    setupPoemAnnotation();
+    setupDragDrop();
+    attachHintButtons();
+    showScreen(1);
+  });
+
+  document.querySelectorAll("[data-nav='next']").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      if (currentScreen < screens.length - 3){
+        showScreen(currentScreen + 1);
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-nav='back']").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      if (currentScreen > 0){
+        showScreen(currentScreen - 1);
+      }
+    });
+  });
+
+  document.getElementById("submitBtn").addEventListener("click", submitPractice);
+  document.getElementById("retryBtn").addEventListener("click", fullReset);
+  document.getElementById("certBtn").addEventListener("click", function(){ showScreen(14); });
+  document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+  document.getElementById("homeBtn").addEventListener("click", fullReset);
+
+  showScreen(0);
+})();
+</script>
+</body>
+</html>
